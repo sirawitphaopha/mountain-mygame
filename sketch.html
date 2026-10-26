@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ร่างภาพภูเขาเส้นเดียว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f4ecd8; --ink:#3b3326; }
+  html, body { margin:0; background:var(--paper); color:var(--ink); font-family:'Mali', sans-serif; }
+  .wrap { max-width:1200px; margin:0 auto; padding:16px; }
+  h1 { font-size:22px; font-weight:600; margin:4px 0 10px; }
+  svg { width:100%; height:auto; display:block; }
+  .label { font-family:'Mali', sans-serif; font-size:19px; fill:#a23b2a;
+           paint-order:stroke; stroke:#f4ecd8; stroke-width:5px; stroke-linejoin:round; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>ร่างภาพ รอบ 4 ·ภูเขาสูง บ้านบนเสาค้ำ ถ้ำใต้ภูเขา</h1>
+
+<svg id="scene" viewBox="0 0 1200 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- ทำเส้นให้สั่นเหมือนวาดด้วยดินสอ -->
+    <filter id="pencil" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3"/>
+    </filter>
+    <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <line x1="0" y1="0" x2="0" y2="9" stroke="#8a7a62" stroke-width="0.9" opacity=".5"/>
+    </pattern>
+    <clipPath id="groundClip"><path id="gclip"/></clipPath>
+    <!-- ซ่อนเส้นภูเขาตรงปากถ้ำกับปากปล่อง -->
+    <mask id="lineMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="1000">
+      <rect width="1200" height="1000" fill="white"/>
+      <g id="maskHoles" fill="none" stroke="black" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"></g>
+    </mask>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#a23b2a"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="1000" fill="#f4ecd8"/>
+  <g id="draw" filter="url(#pencil)"></g>
+  <g id="notes"></g>
+</svg>
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const draw = document.getElementById('draw');
+function el(tag, a, p) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  (p || draw).appendChild(e);
+  return e;
+}
+const INK = '#3b3326', WOOD = '#7a4a22', WOOD2 = '#9c6a3a', WALL = '#f6efe0',
+      ROOF = '#c9b38f', CAVE = '#efe6d2';
+
+// เส้นภูเขาเส้นเดียว ยอดสูงเกือบชนขอบบน
+const P = [[0,820],[80,780],[160,700],[230,610],[290,520],[340,430],[390,330],[440,230],
+           [480,150],[520,95],[560,70],[600,78],[640,110],[690,170],[740,250],[790,340],
+           [840,430],[900,520],[960,600],[1040,680],[1120,740],[1200,770]];
+const PEAK = 560;
+const mtn = 'M' + P.map(p => p.join(' ')).join(' L');
+
+// ความสูงพื้นภูเขาที่ตำแหน่ง x
+function gy(x) {
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i], b = P[i + 1];
+    if (x >= a[0] && x <= b[0]) return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]);
+  }
+  return P[P.length - 1][1];
+}
+// ตำแหน่ง x ที่พื้นภูเขาอยู่ระดับ y (ฝั่งซ้ายหรือขวาของยอด)
+function gx(y, side) {
+  const pts = side === 'L' ? P.filter(p => p[0] <= PEAK) : P.filter(p => p[0] >= PEAK);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    if (y >= Math.min(a[1], b[1]) && y <= Math.max(a[1], b[1]))
+      return a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]);
+  }
+}
+
+document.getElementById('gclip').setAttribute('d', mtn + ' L1200 1000 L0 1000 Z');
+
+// ---------- ท้องฟ้า ----------
+el('circle', { cx: 1090, cy: 90, r: 36, fill: 'none', stroke: '#c98a2b', 'stroke-width': 2.5 });
+el('path', { d: 'M120 110 q20 -25 45 -5 q20 -20 40 0 q20 0 15 15 h-110 q-10 -5 10 -10z', fill: 'none', stroke: '#7a6e5c', 'stroke-width': 2 });
+el('path', { d: 'M900 200 q15 -18 35 -4 q15 -15 30 0 q15 0 12 12 h-85 q-8 -4 8 -8z', fill: 'none', stroke: '#7a6e5c', 'stroke-width': 2 });
+
+// ---------- เนื้อภูเขา ----------
+el('path', { d: mtn + ' L1200 1000 L0 1000 Z', fill: 'url(#hatch)' });
+[[200,880,14,8],[300,960,10,6],[520,470,12,7],[1000,820,16,9],[1100,900,11,7],[680,940,13,7],
+ [120,920,9,6],[960,720,10,6],[470,560,9,5],[760,700,12,6]].forEach(([cx,cy,rx,ry]) =>
+  el('ellipse', { cx, cy, rx, ry, fill: 'none', stroke: '#8a7a62', 'stroke-width': 1.5 }));
+
+// ---------- ถ้ำ ----------
+const caves = [
+  [[395,300],[480,320],[560,350],[600,400],[600,660],[380,660],[380,820],[760,820],[815,840]],
+  [[600,520],[800,520]],
+  [[715,180],[715,520]],
+];
+const cd = c => 'M' + c.map(p => p.join(' ')).join(' L');
+const cg = el('g', { 'clip-path': 'url(#groundClip)', fill: 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+caves.forEach(c => el('path', { d: cd(c), stroke: INK, 'stroke-width': 48 }, cg));
+el('ellipse', { cx: 880, cy: 850, rx: 62, ry: 42, fill: INK }, cg);
+caves.forEach(c => el('path', { d: cd(c), stroke: CAVE, 'stroke-width': 42 }, cg));
+el('ellipse', { cx: 880, cy: 850, rx: 59, ry: 39, fill: CAVE }, cg);
+const holes = document.getElementById('maskHoles');
+caves.forEach(c => el('path', { d: cd(c) }, holes));
+
+// ไม้ค้ำในอุโมงค์: เสาสองต้น + คานบน
+function frame(x, y) {
+  el('rect', { x: x - 13, y: y - 20, width: 5, height: 41, fill: WOOD });
+  el('rect', { x: x + 8, y: y - 20, width: 5, height: 41, fill: WOOD });
+  el('rect', { x: x - 16, y: y - 23, width: 32, height: 6, fill: '#5e3a1a' });
+}
+[[450,312],[520,335],[655,520],[765,520],[540,660],[460,660],[440,820],[520,820],[620,820],[690,820]]
+  .forEach(([x, y]) => frame(x, y));
+// คานขวางในปล่องแนวตั้ง
+[440,480,580,620].forEach(y => el('line', { x1: 580, y1: y, x2: 620, y2: y, stroke: '#5e3a1a', 'stroke-width': 5 }));
+[260,330,400,460].forEach(y => el('line', { x1: 695, y1: y, x2: 735, y2: y, stroke: '#5e3a1a', 'stroke-width': 5 }));
+
+function ladder(x, y1, y2) {
+  el('line', { x1: x - 8, y1, x2: x - 8, y2, stroke: WOOD2, 'stroke-width': 2.5 });
+  el('line', { x1: x + 8, y1, x2: x + 8, y2, stroke: WOOD2, 'stroke-width': 2.5 });
+  for (let y = y1 + 12; y < y2; y += 16)
+    el('line', { x1: x - 8, y1: y, x2: x + 8, y2: y, stroke: WOOD2, 'stroke-width': 2.5 });
+}
+ladder(380, 668, 840);
+ladder(715, 170, 530);
+
+// คนขุด
+const mg = el('g', { stroke: INK, 'stroke-width': 2.5, fill: 'none', 'stroke-linecap': 'round' });
+el('circle', { cx: 560, cy: 811, r: 6 }, mg);
+el('line', { x1: 560, y1: 817, x2: 560, y2: 830 }, mg);
+el('line', { x1: 560, y1: 830, x2: 554, y2: 840 }, mg);
+el('line', { x1: 560, y1: 830, x2: 566, y2: 840 }, mg);
+el('line', { x1: 560, y1: 822, x2: 572, y2: 816 }, mg);
+el('path', { d: 'M572 816 L578 804 M570 802 q8 -4 16 4', stroke: '#5e3a1a' }, mg);
+// ตะเกียงในห้องถ้ำ + ขุดต่อลงไป
+el('circle', { cx: 880, cy: 846, r: 20, fill: '#f3d27a', opacity: .45 });
+el('rect', { x: 875, y: 839, width: 10, height: 13, fill: 'none', stroke: INK, 'stroke-width': 2 });
+el('path', { d: 'M880 895 L880 975', stroke: INK, 'stroke-width': 2.5, 'stroke-dasharray': '6 7', 'marker-end': 'url(#arrow)' });
+
+// ---------- เส้นภูเขา (หนา เว้นช่องตรงปากถ้ำ) ----------
+el('path', { d: mtn, fill: 'none', stroke: INK, 'stroke-width': 4.5, 'stroke-linejoin': 'round', mask: 'url(#lineMask)' });
+
+// ---------- ต้นไม้ ----------
+function tree(x, kind, h) {
+  const base = gy(x) + 4;
+  return treeAt(x, base, kind, h);
+}
+function treeAt(x, base, kind, h) {
+  el('rect', { x: x - 3.5, y: base - h * 0.55, width: 7, height: h * 0.55, fill: WOOD, stroke: INK, 'stroke-width': 1.2 });
+  if (kind === 'pine') {
+    for (let i = 0; i < 3; i++) {
+      const top = base - h + i * h * 0.22, w = h * (0.28 + i * 0.1);
+      el('path', { d: `M${x} ${top} L${x + w} ${top + h * 0.38} L${x - w} ${top + h * 0.38} Z`, fill: '#7f9a63', stroke: INK, 'stroke-width': 2 });
+    }
+  } else {
+    const cy = base - h * 0.7, r = h * 0.24;
+    [[-r * 0.7, 0.2 * r], [r * 0.7, 0.2 * r], [0, -0.45 * r]].forEach(([dx, dy]) =>
+      el('circle', { cx: x + dx, cy: cy + dy, r, fill: '#9bb07a', stroke: INK, 'stroke-width': 2 }));
+  }
+}
+// เสาสัญญาณบนหลังคา
+function antenna(x, y, h) {
+  el('line', { x1: x, y1: y, x2: x, y2: y - h, stroke: INK, 'stroke-width': 2.5 });
+  [18, 13, 8].forEach((w, i) => {
+    const yy = y - h * (0.5 + i * 0.17);
+    el('line', { x1: x - w, y1: yy, x2: x + w, y2: yy, stroke: INK, 'stroke-width': 2 });
+  });
+  el('circle', { cx: x, cy: y - h - 3, r: 3.5, fill: '#c7553f', stroke: INK, 'stroke-width': 1 });
+  [9, 16].forEach(r => {
+    el('path', { d: `M${x + r * 0.7} ${y - h - 3 - r * 0.7} A${r} ${r} 0 0 1 ${x + r * 0.7} ${y - h - 3 + r * 0.7}`, fill: 'none', stroke: '#a23b2a', 'stroke-width': 1.5 });
+    el('path', { d: `M${x - r * 0.7} ${y - h - 3 - r * 0.7} A${r} ${r} 0 0 0 ${x - r * 0.7} ${y - h - 3 + r * 0.7}`, fill: 'none', stroke: '#a23b2a', 'stroke-width': 1.5 });
+  });
+}
+
+// ---------- โครงเสาค้ำ ----------
+let seed = 11;
+function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+function deck(Y, side, len) {
+  const xs = gx(Y, side);
+  const x0 = side === 'L' ? xs - len : xs - 12;
+  const x1 = side === 'L' ? xs + 12 : xs + len;
+  const a = side === 'L' ? x0 + 8 : xs + 10, b = side === 'L' ? xs - 10 : x1 - 8;
+  // เสาแต่ละต้นเหมือนผู้เล่นลากจากใต้พื้นบ้านไปจิ้มพื้นเขา: เอียงไม่เท่ากัน หนาไม่เท่ากัน ระยะไม่เท่ากัน
+  const n = Math.max(3, Math.round((b - a) / 48));
+  const posts = [];
+  for (let i = 0; i <= n; i++) {
+    const sx = a + i * (b - a) / n + (rnd() - 0.5) * 22;
+    let ex = sx + (rnd() - 0.5) * 110;
+    ex = side === 'L' ? Math.min(ex, xs - 18) : Math.max(ex, xs + 18);
+    const g = gy(ex);
+    if (g > Y + 25) posts.push({ sx, sy: Y + 4, ex, ey: g + 2, w: 6 + rnd() * 5 });
+  }
+  const at = (p, t) => [p.sx + (p.ex - p.sx) * t, p.sy + (p.ey - p.sy) * t];
+  const beam = (x1, y1, x2, y2, w) => {
+    el('line', { x1, y1, x2, y2, stroke: INK, 'stroke-width': w + 2.6 });
+    el('line', { x1, y1, x2, y2, stroke: WOOD, 'stroke-width': w });
+  };
+  // ไม้พาดระหว่างเสา ลากมั่ว ๆ บางคู่มี บางคู่ไม่มี
+  for (let i = 0; i < posts.length - 1; i++) {
+    if (rnd() < 0.3) continue;
+    const [x1, y1] = at(posts[i], 0.2 + rnd() * 0.5), [x2, y2] = at(posts[i + 1], 0.2 + rnd() * 0.5);
+    beam(x1, y1, x2, y2, 4 + rnd() * 2);
+  }
+  posts.forEach(p => beam(p.sx, p.sy, p.ex, p.ey, p.w));
+  el('rect', { x: x0, y: Y - 4, width: x1 - x0, height: 10, fill: '#5e3a1a', stroke: INK, 'stroke-width': 1.5 });
+  return { x0, x1, xs, Y };
+}
+
+// ---------- ชิ้นส่วนบ้าน ----------
+function room(x, y, w, h) {
+  el('rect', { x, y, width: w, height: h, fill: WALL, stroke: INK, 'stroke-width': 2.5 });
+  for (let px = x + 14; px < x + w - 4; px += 14)
+    el('line', { x1: px, y1: y + 3, x2: px, y2: y + h - 3, stroke: '#ddd0b5', 'stroke-width': 1 });
+}
+function win(x, y, w, h) {
+  el('rect', { x, y, width: w, height: h, fill: '#e7dcc4', stroke: INK, 'stroke-width': 2 });
+  el('line', { x1: x + w / 2, y1: y, x2: x + w / 2, y2: y + h, stroke: INK, 'stroke-width': 1.5 });
+}
+function door(x, y, w, h) {
+  el('rect', { x, y, width: w, height: h, fill: '#c7a77a', stroke: INK, 'stroke-width': 2 });
+}
+function gable(x, y, w, rise) {
+  el('path', { d: `M${x - 9} ${y} L${x + w / 2} ${y - rise} L${x + w + 9} ${y} Z`, fill: ROOF, stroke: INK, 'stroke-width': 2.5 });
+}
+function shed(x, y, w, rise, high) { // หลังคาเพิงเอียงข้างเดียว
+  const l = high === 'L' ? rise : 0, r = high === 'R' ? rise : 0;
+  el('path', { d: `M${x - 6} ${y - l} L${x + w + 6} ${y - r} L${x + w + 6} ${y - r + 7} L${x - 6} ${y - l + 7} Z`, fill: ROOF, stroke: INK, 'stroke-width': 2 });
+}
+function crate(x, base, s) {
+  el('rect', { x, y: base - s, width: s, height: s, fill: '#d2a86a', stroke: INK, 'stroke-width': 2 });
+  el('rect', { x: x + 3, y: base - s + 3, width: s - 6, height: s - 6, fill: 'none', stroke: '#8b5a2b', 'stroke-width': 1.3 });
+  el('line', { x1: x + 3, y1: base - 3, x2: x + s - 3, y2: base - s + 3, stroke: '#8b5a2b', 'stroke-width': 1.5 });
+}
+function railing(x0, x1, y) {
+  el('line', { x1: x0, y1: y - 20, x2: x1, y2: y - 20, stroke: WOOD, 'stroke-width': 3 });
+  for (let x = x0; x <= x1 + 0.5; x += (x1 - x0) / Math.max(1, Math.round((x1 - x0) / 16)))
+    el('line', { x1: x, y1: y, x2: x, y2: y - 20, stroke: WOOD, 'stroke-width': 2.5 });
+}
+
+// ---------- บ้านหลัง A ไหล่เขาซ้าย: เพิงข้าง + ห้องต่อเติมชั้นบน + ระเบียง + ลัง ----------
+const A = deck(360, 'L', 250);
+const Y_A_MAST = A.Y - 222;
+{
+  const x = A.x0, Y = A.Y;
+  treeAt(x + 12, Y - 4, 'round', 100);
+  room(x + 16, Y - 58, 50, 58); shed(x + 16, Y - 58, 50, 16, 'R'); win(x + 28, Y - 44, 22, 18);
+  room(x + 70, Y - 92, 120, 92); door(x + 148, Y - 52, 24, 52); win(x + 86, Y - 74, 26, 22);
+  el('rect', { x: x + 64, y: Y - 99, width: 132, height: 8, fill: ROOF, stroke: INK, 'stroke-width': 2 });
+  room(x + 84, Y - 160, 78, 61); gable(x + 84, Y - 160, 78, 38); win(x + 110, Y - 146, 24, 20);
+  antenna(x + 123, Y - 196, 66);
+  railing(x + 166, x + 194, Y - 99);
+  crate(x + 198, Y - 4, 24); crate(x + 224, Y - 4, 22); crate(x + 206, Y - 28, 19);
+  treeAt(x + 178, Y - 99, 'round', 34);
+}
+
+// ---------- บ้านหลัง B ใกล้ยอด: สองหลังคา + ห้องต่อเติมด้านข้าง + ลัง ----------
+const B = deck(170, 'R', 175);
+{
+  const x = B.xs, Y = B.Y;
+  treeAt(x + 14, Y - 4, 'round', 115);
+  crate(x - 8, Y - 4, 20); crate(x - 6, Y - 24, 16);
+  room(x + 22, Y - 82, 104, 82); gable(x + 22, Y - 82, 104, 42); win(x + 36, Y - 64, 24, 20); door(x + 90, Y - 50, 22, 50);
+  room(x + 130, Y - 60, 40, 60); shed(x + 130, Y - 60, 40, 14, 'L'); win(x + 140, Y - 46, 18, 16);
+  antenna(x + 152, Y - 66, 58);
+  el('line', { x1: x + 74, y1: Y - 124, x2: x + 74, y2: Y - 160, stroke: INK, 'stroke-width': 2 });
+  el('path', { d: `M${x + 74} ${Y - 160} l26 7 l-26 7 z`, fill: '#c7553f', stroke: INK, 'stroke-width': 1.5 });
+}
+
+// ---------- บ้านหลัง C ไหล่เขาขวา: โรงเก็บของ ลังเยอะ ปั้นจั่นหย่อนลัง ----------
+const C = deck(560, 'R', 190);
+{
+  const x = C.xs, Y = C.Y;
+  treeAt(x + 96, Y - 4, 'pine', 110);
+  room(x + 8, Y - 70, 92, 70); gable(x + 8, Y - 70, 92, 32); door(x + 40, Y - 44, 26, 44);
+  antenna(x + 54, Y - 100, 56);
+  crate(x + 106, Y - 4, 24); crate(x + 131, Y - 4, 24); crate(x + 118, Y - 28, 22); crate(x + 158, Y - 4, 20);
+  const px = C.x1 - 10;
+  el('rect', { x: px - 4, y: Y - 130, width: 8, height: 126, fill: WOOD, stroke: INK, 'stroke-width': 1.3 });
+  el('rect', { x: px - 4, y: Y - 132, width: 66, height: 7, fill: WOOD, stroke: INK, 'stroke-width': 1.3 });
+  el('line', { x1: px, y1: Y - 80, x2: px + 36, y2: Y - 126, stroke: WOOD2, 'stroke-width': 3 });
+  el('line', { x1: px + 56, y1: Y - 125, x2: px + 56, y2: Y + 40, stroke: INK, 'stroke-width': 1.5 });
+  crate(px + 44, Y + 64, 24);
+}
+
+// ---------- โซล่าเซลล์บนหลังคาบ้าน B (ลาดหลังคาด้านขวา) ----------
+{
+  const px = B.xs + 74, py = B.Y - 124, ex = B.xs + 135, ey = B.Y - 82;
+  const vx = ex - px, vy = ey - py, len = Math.hypot(vx, vy);
+  const ux = vx / len, uy = vy / len, nx = uy, ny = -ux, th = 9;
+  const p = t => [px + vx * t + nx * 3, py + vy * t + ny * 3];
+  const [a1, a2] = [p(0.18), p(0.88)];
+  el('path', { d: `M${a1} L${a2} L${a2[0] + nx * th} ${a2[1] + ny * th} L${a1[0] + nx * th} ${a1[1] + ny * th} Z`, fill: '#3d5a80', stroke: INK, 'stroke-width': 2 });
+  [0.41, 0.65].forEach(t => {
+    const q = p(t);
+    el('line', { x1: q[0], y1: q[1], x2: q[0] + nx * th, y2: q[1] + ny * th, stroke: '#a9c2dc', 'stroke-width': 1.5 });
+  });
+}
+
+// ---------- สายไฟเชื่อมทุกหลัง (ผ่านเสาไฟบนยอดเขา) ----------
+el('rect', { x: 556, y: 22, width: 7, height: 52, fill: WOOD, stroke: INK, 'stroke-width': 1.2 });
+el('line', { x1: 544, y1: 28, x2: 576, y2: 28, stroke: WOOD, 'stroke-width': 4 });
+function cable(x1, y1, x2, y2, sag) {
+  el('path', { d: `M${x1} ${y1} Q${(x1 + x2) / 2} ${(y1 + y2) / 2 + sag * 2} ${x2} ${y2}`, fill: 'none', stroke: '#1f1a14', 'stroke-width': 2.8 });
+  [[x1, y1], [x2, y2]].forEach(([cx, cy]) => el('circle', { cx, cy, r: 3, fill: '#e0d4bb', stroke: INK, 'stroke-width': 1.2 }));
+}
+cable(A.x0 + 123, Y_A_MAST, 547, 28, 30);          // บ้าน A ขึ้นเสาไฟบนยอด
+cable(573, 28, B.xs + 26, B.Y - 76, 14);            // เสาไฟลงบ้าน B
+cable(B.xs + 168, B.Y - 50, C.xs + 10, C.Y - 62, 22); // บ้าน B ลงบ้าน C
+
+// ---------- คำอธิบาย (ไม่ใส่ตัวทำเส้นสั่น ให้อ่านง่าย) ----------
+const notes = document.getElementById('notes');
+const arrows = [
+  'M408 52 Q490 45 552 66',
+  'M95 505 Q125 515 150 530',
+  'M150 190 Q185 200 212 218',
+  'M80 262 Q105 268 122 276',
+  'M300 112 Q280 104 262 102',
+  'M790 588 Q745 560 724 478',
+  'M470 608 Q472 625 464 636',
+  'M1045 410 Q1060 470 1052 512',
+  'M915 115 Q885 120 865 128',
+  'M935 252 Q910 245 892 238',
+  'M920 42 Q860 40 812 58',
+  'M260 760 Q330 760 368 745',
+  'M955 925 Q925 925 896 935',
+];
+arrows.forEach(d => el('path', { d, fill: 'none', stroke: '#a23b2a', 'stroke-width': 1.8, 'marker-end': 'url(#arrow)' }, notes));
+[
+  [300, 58, 'ภูเขาสูง'],
+  [10, 470, 'เสาค้ำ ลากจาก'],
+  [10, 494, 'พื้นบ้านลงพื้นเขา'],
+  [30, 185, 'ห้องต่อเติม'],
+  [10, 258, 'ต้นไม้ที่บ้าน'],
+  [305, 118, 'เสาสัญญาณ'],
+  [745, 610, 'ปล่องจากบ้านลงถ้ำ'],
+  [405, 600, 'ไม้ค้ำยันในถ้ำ'],
+  [1010, 402, 'ลังใส่ของ'],
+  [920, 108, 'ห้องต่อเติมด้านข้าง'],
+  [940, 258, 'สายไฟเชื่อมแต่ละหลัง'],
+  [925, 48, 'โซล่าเซลล์'],
+  [130, 768, 'บันไดลงชั้นล่าง'],
+  [960, 932, 'ขุดลึกลงไปเรื่อย ๆ'],
+].forEach(([x, y, t]) => { el('text', { x, y, class: 'label' }, notes).textContent = t; });
+</script>
+</body>
+</html>
